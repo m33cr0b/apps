@@ -1,0 +1,9 @@
+title=TSN.ua
+subtitle=Bringing you the latest in Ukrainian news.
+mm_icon_focus_hd=pkg:/images/tsn.png
+mm_icon_side_hd=pkg:/images/tsn.png
+mm_icon_focus_sd=pkg:/images/tsn.png
+mm_icon_side_sd=pkg:/images/tsn.png
+major_version=1
+minor_version=0
+build_version=00000
