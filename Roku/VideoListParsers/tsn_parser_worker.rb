@@ -115,16 +115,45 @@ class TsnVideoListCreator
     end
     
     
+    def visit_and_extract_mp4_url page_path
+	
+	begin
+	    http = Net::HTTP.new(@@host, 80)	    
+	    response = http.get2(page_path) #, @@headers)
+	    
+#	    puts response.body
+	    
+	    extract_mp4_url response.body
+	rescue => e
+	    puts e.message
+	    e.backtrace.each do |bt|
+		puts bt.to_s
+	    end	    
+	end
+    end
+    
+    def extract_mp4_url data
+	if /src=.*(http:\/\/.*?[.]mp4)/.match(data)
+	    return $1
+	else
+	    return ""
+	end
+    end
+    
+    
     def parse_page(page_num)
+	
+	puts "in parse_page"
+	
 	post_data="id_section=308&page=#{page_num}&type=2&media_id=0&items=24908"
 	
 	begin
 	    http = Net::HTTP.new(@@host, 80)
 	    resp, data = http.post2(@@path, post_data, @@headers)
 	rescue => e
-#	    puts "Caught exception: #{e.to_s}"
+	    puts "Caught exception: #{e.to_s}"
 	    e.backtrace.each do |bt|
-#		puts bt.to_s
+		puts bt.to_s
 	    end
 	end
 
@@ -135,24 +164,29 @@ class TsnVideoListCreator
 	thumbnail_url = ''
 	is_today = false
 	date_today = DateTime.httpdate(resp['Date']).new_offset("+02:00")
+	video_url = ''
 	
 	puts "date_today: #{date_today}"
 	
 	data.lines.each do |line|
-    
+	    
 	    # find open li
 	    if state == 0 && /.*<li.*/.match(line)
 		puts "state 0"
-		state = 2
+		state = 1
 	    end
 	    
-	    # find movie href media id
-#	    if state == 1 && /.*<a href=.*media_id=(.*)&items.*/.match(line)
-#		puts "in state 1, found video url: #{$1}"
-#		media_id = $1
-#		state = 2
-#	    end
-    
+	    if state == 1 && /<a href='(.*?)' class='image'>/.match(line)
+		puts "state 1"
+		video_page_path = $1
+		
+		puts "video page path: #{video_page_path}"
+		state = 2
+		
+		video_url = visit_and_extract_mp4_url video_page_path
+	    end
+	    
+	    
 	    # find thumbnail url
 	    if state == 2 && /.*<img src='(.*?)'.*/.match(line)
 		puts "in state 2, found thumbnail url: #{$1}"
@@ -190,7 +224,7 @@ class TsnVideoListCreator
 	    
 		state = 4
 	    end
-	
+	    
 	    if state == 4 
 		puts "in state 4, saving data, going to state 0"
 		
@@ -205,7 +239,7 @@ class TsnVideoListCreator
 		day = "%02d" % [date.day]
 		month = "%02d" % [date.month]
 		
-		video.url = "#{@@videos_url}/#{date.year}/#{month}/#{day}/#{media_id}-2.mp4"
+		video.url = video_url
 		video.thumbnail_url = thumbnail_url
 		video.title = "TSN - #{date.to_s}"
 		video.date = date
