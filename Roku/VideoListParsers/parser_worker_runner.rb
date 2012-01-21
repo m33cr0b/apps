@@ -20,7 +20,7 @@ worker = TsnParserWorker.new
 worker.schedule(:start_at => 2.minutes.since, :run_every => 3600, :run_times => 1000000000)
 
 railscasts_worker = RailscastsParserWorker.new
-railscasts_worker.schedule(:start_at => 2.minutes.since, :run_every => 3600, :run_times => 1000000000)
+railscasts_worker.schedule(:start_at => 2.minutes.since, :run_every => (4 * 3600), :run_times => 1000000000)
 
 
 
