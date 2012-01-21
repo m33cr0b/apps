@@ -3,9 +3,13 @@ require 'net/http'
 require 'date'
 require 'json'
 
+
+
 class Video
-  attr_accessor :url, :thumbnail_url, :title, :description, :date
+  attr_accessor :url, :thumbnail_url, :title, :description, :date, :category
 end
+
+
 
 class TsnVideoListCreator
 
@@ -13,7 +17,7 @@ class TsnVideoListCreator
   @@video_filename="videos.xml"
   @@host="tsn.ua"
   @@path="/video/video-novini/"
-  @@number_of_video_pages_to_parse=5
+  @@number_of_video_pages_to_parse=1
   @@headers = {
     'Host' =>	'tsn.ua',
     'User-Agent' =>	'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:6.0.1) Gecko/20100101 Firefox/6.0.1',
@@ -37,6 +41,15 @@ class TsnVideoListCreator
   }
   @@today = [208, 161, 209, 140, 208, 190, 208, 179, 208, 190, 208, 180, 208, 189, 209, 150, 32]
   @@yesterday = [208, 146, 209, 135, 208, 190, 209, 128, 208, 176, 32]
+  @@type_category_map = {
+    0 => 'All',
+    2 => 'Ukraine',
+    14 => 'Politics',
+    3 => 'World' ,
+    4 => 'Money',
+    6 => 'Sport',
+    7 => 'Information Technology'
+  }
 
   def write_video_list_to_file
     string_xml = create_xml_string
@@ -49,8 +62,10 @@ class TsnVideoListCreator
   def create_xml_string
     videos = []
 
-    (1..@@number_of_video_pages_to_parse).each do |i|
-      videos.concat(parse_page(i))
+    @@type_category_map.each_key do |type_id|
+    (1..@@number_of_video_pages_to_parse).each do |page_number|
+        videos.concat(parse_page(type_id, page_number))
+      end
     end
 
     return to_xml(videos)
@@ -61,29 +76,42 @@ class TsnVideoListCreator
     string_xml += '<tvStation>'
     string_xml += '<dates>'
 
-    date = DateTime::now
-    
-    display_date = date.strftime('%a %b %d %Y')
-
-    string_xml += "<date>"
-    string_xml += "<displayDate>#{display_date}</displayDate>"
-    string_xml += "<day>#{date.day}</day>"
-    string_xml += "<month>#{date.month}</month>"
-    string_xml += "<year>#{date.year}</year>"
-
-    string_xml += "<videos>"
+    videos_by_categories = {}
 
     videos.each do |video|
-      string_xml += "<video>"
-      string_xml += "<title>#{video.title}</title>"
-      string_xml += "<description>#{video.description}</description>"
-      string_xml += "<url>#{video.url}</url>"
-      string_xml += "<thumbnail_url>#{video.thumbnail_url}</thumbnail_url>"
-      string_xml += "</video>"
+      if videos_by_categories.key? video.category
+      videos_by_categories[video.category] << video
+      else
+        videos_by_categories[video.category] = [video]
+      end
     end
 
-    string_xml += "</videos>"
-    string_xml += "</date>"
+    date = DateTime::now
+
+    display_date = date.strftime('%a %b %d %Y')
+
+    videos_by_categories.keys.each do |category|
+      string_xml += "<date>"
+      string_xml += "<displayDate>#{category}</displayDate>"
+      string_xml += "<day>#{date.day}</day>"
+      string_xml += "<month>#{date.month}</month>"
+      string_xml += "<year>#{date.year}</year>"
+
+      string_xml += "<videos>"
+
+      videos_by_categories[category].each do |video|
+        string_xml += "<video>"
+        string_xml += "<title>#{video.title}</title>"
+        string_xml += "<description>#{video.description}</description>"
+        string_xml += "<url>#{video.url}</url>"
+        string_xml += "<thumbnail_url>#{video.thumbnail_url}</thumbnail_url>"
+        string_xml += "</video>"
+      end
+      
+      string_xml += "</videos>"      
+      string_xml += "</date>"
+
+    end
 
     string_xml += '</dates>'
     string_xml += '</tvStation>'
@@ -112,13 +140,17 @@ class TsnVideoListCreator
     end
   end
 
-  def parse_page(page_num)
-    puts "staring to parse_page: #{page_num}"
+  def parse_page(type_id, page_num)
+    puts "starting to parse category #{@@type_category_map[type_id]} page: #{page_num}"
 
-    post_data="id_section=308&page=#{page_num}&type=2&media_id=0&items=24908"
+    post_data="id_section=308&page=#{page_num}&type=#{type_id}&media_id=0&items=24908"
 
     begin
       http = Net::HTTP.new(@@host, 80)
+      
+      puts "path #{@@path}"
+      
+      puts "post_data: #{post_data}"
       resp, data = http.post2(@@path, post_data, @@headers)
     rescue => e
       puts "Caught exception: #{e.to_s}"
@@ -216,6 +248,8 @@ class TsnVideoListCreator
         video.title = "TSN - #{display_date}"
         video.date = date
 
+        video.category = @@type_category_map[type_id]
+
         puts "videos length: #{videos.length}"
 
       videos << video
@@ -233,6 +267,8 @@ class TsnVideoListCreator
     return videos
   end
 end
+
+
 
 class TsnParserWorker < SimpleWorker::Base
 
