@@ -23,8 +23,8 @@ Sub Setup() As Object
         fonts:     CreateObject("roFontRegistry") 'global font registry
         canvas:    CreateObject("roImageCanvas") 'user interface
         player:    CreateObject("roVideoPlayer")
-        setup:     SetupFramedCanvas
-        paint:     PaintFramedCanvas
+        setup:     SetupFullscreenCanvas
+        paint:     PaintFullscreenCanvas
         eventloop: EventLoop
         urls: CreateObject("roArray", 3, true)
         play:   Play
@@ -55,8 +55,8 @@ Sub Setup() As Object
             right:  { x: 700, y: 177, w: 350, h: 291 }
             bottom: { x: 249, y: 500, w: 780, h: 300 }
         }
-        this.background = "pkg:/images/back-hd.jpg"
-        this.headerfont = this.fonts.get("lmroman10 caps", 50, 50, false)
+        'this.background = "pkg:/images/back-hd.jpg"
+        'this.headerfont = this.fonts.get("lmroman10 caps", 50, 50, false)
     else
         this.layout = {
             full:   this.canvas.GetCanvasRect()
@@ -65,11 +65,15 @@ Sub Setup() As Object
             right:  { x: 400, y: 100, w: 220, h: 210 }
             bottom: { x: 100, y: 340, w: 520, h: 140 }
         }
-        this.background = "pkg:/images/back-sd.jpg"
-        this.headerfont = this.fonts.get("lmroman10 caps", 30, 50, false)
+        'this.background = "pkg:/images/back-sd.jpg"
+        'this.headerfont = this.fonts.get("lmroman10 caps", 30, 50, false)
     end if
 
     this.player = CreateObject("roVideoPlayer")
+    rect = { x:0, y:0, w:0, h:0 } 'fullscreen
+    this.player.SetDestinationRect(0, 0, 0, 0) 'fullscreen
+    this.player.SetDestinationRect(rect)   
+    
     this.urls[0] = "http://ec2-184-72-239-149.compute-1.amazonaws.com:1935/demos/smil:bigbuckbunnyiphone.smil/playlist.m3u8"
     this.urls[1] = "http://devimages.apple.com/iphone/samples/bipbop/gear2/prog_index.m3u8"
     this.urls[2] = "http://devimages.apple.com/iphone/samples/bipbop/gear1/prog_index.m3u8"
@@ -80,12 +84,13 @@ Sub Setup() As Object
 End Sub
 
 Sub Play (index As Integer)
+
     print "In Play index: "; index
 
     m.player.SetMessagePort(m.port)
     m.player.SetLoop(true)
     m.player.SetPositionNotificationPeriod(1)
-    m.player.SetDestinationRect(m.layout.left)
+    m.player.SetDestinationRect(m.layout.full)
     m.player.SetContentList([{
         Stream: { url: m.urls[index]}
     StreamFormat: "hls"
@@ -120,24 +125,19 @@ Sub EventLoop()
                 print "Remote button pressed: " + index.tostr()
                 if index = 2  '<UP>
                     return
-                else if index = 3 '<DOWN> (toggle fullscreen)
-                    if m.paint = PaintFullscreenCanvas
-                        m.setup = SetupFramedCanvas
-                        m.paint = PaintFramedCanvas
-                        rect = m.layout.left
-                    else
-                        m.setup = SetupFullscreenCanvas
-                        m.paint = PaintFullscreenCanvas
-                        rect = { x:0, y:0, w:0, h:0 } 'fullscreen
-                        m.player.SetDestinationRect(0, 0, 0, 0) 'fullscreen
-                    end if
-                    m.setup()
-                    m.player.SetDestinationRect(rect)
+                'else if index = 3 '<DOWN> (toggle fullscreen)
+                    '    no operation
                 else if index = 4 or index = 8  '<LEFT> or <REV>
                     currentIndex = currentIndex - 1
+                    if currentIndex < 0
+                       currentIndex = m.urls.Count() - 1
+                    end if
                     m.play(currentIndex)
                 else if index = 5 or index = 9  '<RIGHT> or <FWD>
                     currentIndex = currentIndex + 1
+                    if currentIndex = m.urls.Count() 
+                       currentIndex = 0  
+                    end if
                     m.play(currentIndex)
                 else if index = 13  '<PAUSE/PLAY>
                     if m.paused m.player.Resume() else m.player.Pause()
