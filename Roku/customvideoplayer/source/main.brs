@@ -1,20 +1,22 @@
-' ********************************************************************
-' ********************************************************************
-' **  Roku Custom Video Player Channel (BrightScript)
-' **
-' **  May 2010
-' **  Copyright (c) 2010 Roku Inc. All Rights Reserved.
-' ********************************************************************
-' ********************************************************************
 
+''
+'' This is the entry point of the application. The user interface sits
+'' in a forever loop. Only the home button exists the channel.
+''
 Sub RunUserInterface()
-    o = Setup()
-    o.setup()
-    o.paint()
-    o.eventloop()
+    while true
+        o = Setup()   
+        o.showHomeScreen()    
+        'o.setup()
+        'o.paint()
+        o.eventloop()
+    end while
 End Sub
 
-Sub Setup() As Object
+''
+'' Setup the global object. All channel video configuration is setup here.
+''
+Function Setup() As Object
     this = {
         port:      CreateObject("roMessagePort")
         progress:  0 'buffering progress
@@ -26,8 +28,10 @@ Sub Setup() As Object
         setup:     SetupFullscreenCanvas
         paint:     PaintFullscreenCanvas
         eventloop: EventLoop
-        urls: CreateObject("roArray", 3, true)
+        urls: CreateObject("roArray", 5, true)
         play:   Play
+        showHomeScreen: ShowHomeScreen
+        showList: CreateObject("roArray", 10, true)
     }
 
     'Static help text:
@@ -65,26 +69,117 @@ Sub Setup() As Object
             right:  { x: 400, y: 100, w: 220, h: 210 }
             bottom: { x: 100, y: 340, w: 520, h: 140 }
         }
-        'this.background = "pkg:/images/back-sd.jpg"
-        'this.headerfont = this.fonts.get("lmroman10 caps", 30, 50, false)
     end if
 
     this.player = CreateObject("roVideoPlayer")
     rect = { x:0, y:0, w:0, h:0 } 'fullscreen
     this.player.SetDestinationRect(0, 0, 0, 0) 'fullscreen
     this.player.SetDestinationRect(rect)   
+
+    this.urls = GetUrlList()
     
-    this.urls[0] = "http://ec2-184-72-239-149.compute-1.amazonaws.com:1935/demos/smil:bigbuckbunnyiphone.smil/playlist.m3u8"
-    this.urls[1] = "http://devimages.apple.com/iphone/samples/bipbop/gear2/prog_index.m3u8"
-    this.urls[2] = "http://devimages.apple.com/iphone/samples/bipbop/gear1/prog_index.m3u8"
-    
-    this.play(0)
+    this.showList = GetVideoList()
 
     return this
-End Sub
+End Function
 
-Sub Play (index As Integer)
+''
+'' Retrieve a list of stream urls for the videos.xml file.
+''
+Function GetUrlList() As Object
+    rsp=CreateObject("roXMLElement")    
+    rsp.Parse(ReadAsciiFile("pkg:/videos.xml"))
 
+    categories = rsp.categories.category
+    print "before for each"
+    for each category in categories 
+        videos = category.videos.video
+        print "category.videos type: ";type(category.videos)
+        
+        urls = CreateObject("roArray", videos.Count(), true)
+        for i = 0 to (videos.Count() - 1)          
+            print "loop"; videos[i].title.GetText()
+            urls[i] = videos[i].url.GetText()
+        end for     
+        
+        return urls      
+    end for
+End Function
+
+''
+'' Retrieve the home screen thumbnail url, title, and description.
+''
+Function GetVideoList() As Object
+    rsp=CreateObject("roXMLElement")    
+    rsp.Parse(ReadAsciiFile("pkg:/videos.xml"))
+
+    categories = rsp.categories.category
+    print "before for each"
+    for each category in categories 
+        videos = category.videos.video
+        print "category.videos type: ";type(category.videos)
+        
+        showList = CreateObject("roArray", videos.Count(), true)
+        for each video in videos
+          
+            print "loop"; video.title.GetText()
+                videoInfo = {
+                ShortDescriptionLine1:video.title.GetText(),
+                ShortDescriptionLine2:video.description.GetText(),
+                HDPosterUrl:video.thumbnail_url.GetText(),
+                SDPosterUrl:video.thumbnail_url.GetText()
+            }
+            showList.Push(videoInfo)
+        end for     
+        
+        return showList      
+    end for
+End Function
+   
+''
+'' This method displays the home screen, and waits for key press events. Once
+'' a video is selected, then the event loop method waits for key presses.
+''
+Function ShowHomeScreen() As Object
+
+    port=CreateObject("roMessagePort")
+    screen = CreateObject("roPosterScreen")
+    screen.SetMessagePort(port)
+    
+    screen.SetContentList(m.showList)   
+    screen.Show()
+
+    break_out = 0
+
+    while true and break_out = 0
+        msg = wait(0, screen.GetMessagePort())
+        if type(msg) = "roPosterScreenEvent" then
+            print "showPosterScreen | msg = "; msg.GetMessage() " | index = "; msg.GetIndex() " | type = "; msg.GetType()
+            if msg.isListFocused() then
+                'get the list of shows for the currently selected item                       
+                print "list focused | current category = "; msg.GetIndex()
+            else if msg.isListItemFocused() then
+                print"list item focused | current show = "; msg.GetIndex()
+            else if msg.isListItemSelected() then
+                print "list item selected | current show = "; msg.GetIndex() 
+                videoIndex = msg.GetIndex()
+
+                m.play(videoIndex)
+                break_out = 1
+            else if msg.isListItemInfo() then      ' INFO BUTTON PRESSED
+                DisplayInfoMenu(msg.getindex())
+            else if msg.isScreenClosed() then
+                return -1
+            end if
+        end If
+    end while
+
+End Function
+
+''
+'' Start playing a video given a selected video index.
+''
+Function Play (index As Integer)
     print "In Play index: "; index
 
     m.player.SetMessagePort(m.port)
@@ -93,11 +188,14 @@ Sub Play (index As Integer)
     m.player.SetDestinationRect(m.layout.full)
     m.player.SetContentList([{
         Stream: { url: m.urls[index]}
-    StreamFormat: "hls"
+        StreamFormat: "hls"
     }])
     m.player.Play()
-end Sub
+End Function
 
+''
+'' The eventloop. This method waits for keypresses while the video is playing.
+''
 Sub EventLoop()
 
     currentIndex = 0
@@ -124,6 +222,7 @@ Sub EventLoop()
                 index = msg.GetIndex()
                 print "Remote button pressed: " + index.tostr()
                 if index = 2  '<UP>
+                    m.showPosterScreen()
                     return
                 'else if index = 3 '<DOWN> (toggle fullscreen)
                     '    no operation
