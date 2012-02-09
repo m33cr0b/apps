@@ -3,13 +3,23 @@
 '' in a forever loop. Only the home button exists the channel.
 ''
 Sub RunUserInterface()
-    o = Setup()   
-    while true        
-        o.showHomeScreen()    
+    o = Setup() 
+    while true  
+        print "In the while loop" 
+        msg = o.showHomeScreen()
+        print "Before Home screen msg msg"
+        print "Home scrren msg = "; msg      
+        if msg < 0 
+           print "Exiting  the while loop"   
+           exitwhile
+        end if   
+        
+        print "Before o.setup()"
         o.setup()
         o.paint()
         o.eventloop()
     end while
+    print "App has gone into afterlife"   
 End Sub
 
 ''
@@ -154,10 +164,19 @@ Function ShowHomeScreen() As Object
     
 
     while true and break_out = 0
+        print "Home screen waiting for an event"
+        
         msg = wait(0, screen.GetMessagePort())
         if type(msg) = "roPosterScreenEvent" then
             print "showPosterScreen | msg = "; msg.GetMessage() " | index = "; msg.GetIndex() " | type = "; msg.GetType()
-            if msg.isListFocused() then
+            index = msg.GetIndex()               
+            print "Msg index: " + index.tostr()
+            if msg.GetType() = 1 and (index = 0 or index = 2)  '<UP> or <BACK>    
+                print "Back or up pressed: " + index.tostr()           
+                print "Home screen exiting, returning -1"
+                screen.Close()
+                return -1   
+            else if msg.isListFocused() then
                 'get the list of shows for the currently selected item                       
                 print "list focused | current category = "; msg.GetIndex()
             else if msg.isListItemFocused() then
@@ -172,11 +191,15 @@ Function ShowHomeScreen() As Object
             else if msg.isListItemInfo() then      ' INFO BUTTON PRESSED
                 DisplayInfoMenu(msg.getindex())
             else if msg.isScreenClosed() then
-                return -1
+                print "Home screen exiting, returning -1"
+                screen.Close()
+                return -1     
             end if
         end If
     end while
-
+    print "Home screen exiting, returning "
+    screen.Close()
+    return 0
 End Function
 
 ''
@@ -202,6 +225,7 @@ End Function
 Sub EventLoop()
 
     while true
+        print "Player waiting for an event"
         msg = wait(0, m.port)
         if msg <> invalid
             'If this is a startup progress status message, record progress
@@ -225,7 +249,7 @@ Sub EventLoop()
                 print "Remote button pressed: " + index.tostr()
                 if index = 0 or index = 2 '<UP> or <BACK>
                     m.player.Stop()
-                    m.showHomeScreen()
+                    'm.showHomeScreen()
                     return
                 'else if index = 3 '<DOWN> (toggle fullscreen)
                     '    no operation
