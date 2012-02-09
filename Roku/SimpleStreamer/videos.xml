@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<tvStation>
+  <categories>
+    <category>
+      <name>Streams</name>
+      <videos>
+        <video>
+          <title>Liberal Egypt Live Stream</title>
+          <description>Watch now!</description>
+          <url>http://xontvegx.api.channel.livestream.com/3.0/playlist.m3u8</url>
+          <thumbnail_url>http://www.freeetv.com/images/reydddd/ontveg.jpg</thumbnail_url>
+          <date></date>
+        </video>
+        <video>
+          <title>Live Stream 2</title>
+          <description></description>
+          <url>http://xvilafrancatvx.api.channel.livestream.com/3.0/playlist.m3u8</url>
+          <thumbnail_url>http://www.rtvvilafranca.cat/media/banners/sintonitzaPTV.jpg</thumbnail_url>
+          <date></date>
+        </video>
+        <video>
+          <title>Live surf stream</title>
+          <description></description>
+          <url>http://xsurfcastx.api.channel.livestream.com/3.0/playlist.m3u8</url>
+          <thumbnail_url>http://www.surfcast.com.br/images/WRGN-banner_surf1.jpg</thumbnail_url>
+          <date></date>
+        </video>
+        <video>
+          <title>xfunoonx</title>
+          <description></description>
+          <url>http://xfunoonx.api.channel.livestream.com/3.0/playlist.m3u8</url>
+          <thumbnail_url>http://www.livestream.com/filestore/logos/d47cb8d6-a995-ae76-ac8d-d06c7f481966-small.png</thumbnail_url>
+          <date></date>
+        </video>
+        <video>
+          <title>Pre-recorded Stream</title>
+          <description></description>
+          <url>http://ec2-184-72-239-149.compute-1.amazonaws.com:1935/demos/smil:bigbuckbunnyiphone.smil/playlist.m3u8</url>
+          <thumbnail_url>pkg://images/stream_poster.jpg</thumbnail_url>
+          <date></date>
+        </video>             
+      </videos>
+    </category>
+  </categories>
+</tvStation>
