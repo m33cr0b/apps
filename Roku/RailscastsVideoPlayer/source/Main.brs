@@ -23,16 +23,21 @@ Sub initTheme()
     app = CreateObject("roAppManager")
     theme = CreateObject("roAssociativeArray")
 
-    theme.OverhangOffsetSD_X = "72"
-    theme.OverhangOffsetSD_Y = "25"
-    theme.OverhangSliceSD = "pkg:/images/Overhang_BackgroundSlice_tsn_SD43.png"
-'    theme.OverhangLogoSD  = "pkg:/images/Logo_Overhang_tsn_SD43.png"
+    theme.OverhangOffsetSD_X = "30"
+    theme.OverhangOffsetSD_Y = "22"
+    theme.OverhangSliceSD = "pkg:/images/overhang_background_slice_SD.png"
+    theme.OverhangLogoSD  = "pkg:/images/Logo_Overhang_SD.png"
 
-    theme.OverhangOffsetHD_X = "123"
-    theme.OverhangOffsetHD_Y = "48"
-    theme.OverhangSliceHD = "pkg:/images/Overhang_BackgroundSlice_tsn_HD.png"
-'    theme.OverhangLogoHD  = "pkg:/images/Logo_Overhang_tsn_HD.png"
 
+    theme.OverhangOffsetHD_X = "15"
+    theme.OverhangOffsetHD_Y = "60"
+    theme.OverhangSliceHD = "pkg:/images/Overhang_BackgroundSlice_HD.png"
+    theme.OverhangLogoHD  = "pkg:/images/Logo_Overhang_HD.png"
+
+    theme.BackgroundColor = "#FFFFFF"
+    theme.FilterBannerSliceHD = "pkg:/images/banner_filter_HD.png"
+    theme.FilterBannerSliceSD = "pkg:/images/banner_filter_SD.png"
+    
     app.SetTheme(theme)
 End Sub
 
@@ -48,6 +53,7 @@ Function preShowPosterScreen(breadA=invalid, breadB=invalid) As Object
     if breadA<>invalid and breadB<>invalid then
         screen.SetBreadcrumbText(breadA, breadB)
     end if
+
 
     screen.SetListStyle("arced-landscape")
     return screen
@@ -71,7 +77,7 @@ Function showPosterScreen(screen As Object) As Integer
     while true
         msg = wait(0, screen.GetMessagePort())
         if type(msg) = "roPosterScreenEvent" then
-            print "showPosterScreen | msg = "; msg.GetMessage() " | index = "; msg.GetIndex()
+            print "showPosterScreen | msg = "; msg.GetMessage() " | index = "; msg.GetIndex() " | type = "; msg.GetType()
             if msg.isListFocused() then
                 'get the list of shows for the currently selected item
                 screen.SetContentList(getShowsForCategoryItem(categoryList[msg.GetIndex()]))

@@ -97,8 +97,13 @@ End Function
 '' Retrieve a list of stream urls for the videos.xml file.
 ''
 Function GetUrlList() As Object
-    rsp=CreateObject("roXMLElement")    
-    rsp.Parse(ReadAsciiFile("pkg:/videos.xml"))
+    urlTransfer = CreateObject("roUrlTransfer")
+    urlTransfer.SetUrl("http://michel.f1kart.com/channels/2.xml")    
+    raw_xml = urlTransfer.GetToString()
+
+    rsp=CreateObject("roXMLElement")
+    rsp.Parse(raw_xml)    
+
 
     categories = rsp.categories.category
     print "before for each"
@@ -120,8 +125,12 @@ End Function
 '' Retrieve the home screen thumbnail url, title, and description.
 ''
 Function GetVideoList() As Object
-    rsp=CreateObject("roXMLElement")    
-    rsp.Parse(ReadAsciiFile("pkg:/videos.xml"))
+    urlTransfer = CreateObject("roUrlTransfer")
+    urlTransfer.SetUrl("http://michel.f1kart.com/channels/2.xml")    
+    raw_xml = urlTransfer.GetToString()
+
+    rsp=CreateObject("roXMLElement")
+    rsp.Parse(raw_xml)    
 
     categories = rsp.categories.category
     print "before for each"

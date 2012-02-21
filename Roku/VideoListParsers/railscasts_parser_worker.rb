@@ -301,6 +301,6 @@ class RailscastsParserWorker < SimpleWorker::Base
   end
 end
 
-r = RailscastsParserWorker.new
-r.run
+r = RailscastsVideoListCreator.new
+r.write_video_list_to_file
 

@@ -3,13 +3,9 @@ require 'net/http'
 require 'date'
 require 'json'
 
-
-
 class Video
   attr_accessor :url, :thumbnail_url, :title, :description, :date, :category
 end
-
-
 
 class TsnVideoListCreator
 
@@ -17,7 +13,7 @@ class TsnVideoListCreator
   @@video_filename="videos.xml"
   @@host="tsn.ua"
   @@path="/video/video-novini/"
-  @@number_of_video_pages_to_parse=1
+  @@number_of_video_pages_to_parse=8
   @@headers = {
     'Host' =>	'tsn.ua',
     'User-Agent' =>	'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:6.0.1) Gecko/20100101 Firefox/6.0.1',
@@ -200,10 +196,10 @@ class TsnVideoListCreator
 
         puts "found media_id #{media_id}"
 
-      state = 3
+        state = 3
       end
-
-      if state == 3 && /.*<span class='date'>(.* )\/.*/.match(line)
+      
+      if state == 3 && /.*<span class='date'>(.*)<\/span>.*/.match(line)
         puts "in state 3, found date: #{$1}"
 
         raw_date = []
@@ -258,17 +254,9 @@ class TsnVideoListCreator
       end
     end
 
-    puts videos.length
-
-    if videos.length == 0
-      raise "zero videos parsed"
-    end
-
     return videos
   end
 end
-
-
 
 class TsnParserWorker < SimpleWorker::Base
 
@@ -304,6 +292,6 @@ class TsnParserWorker < SimpleWorker::Base
   end
 end
 
-#t = TsnVideoListCreator.new
-#t.write_video_list_to_file
+t = TsnVideoListCreator.new
+t.write_video_list_to_file
 

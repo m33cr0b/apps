@@ -1,0 +1,9 @@
+C0C9DM032175
+ETHMAC 00:0d:4b:4f:08:9c
+WIFIMAC 00:0d:4b:4f:08:9d
+>genkey
+..................................+++
+                                     ..................................+++
+                                                                          Password: SVtufQ/zJ2Z7zjSa0kM/6g==
+DevID: 19c7261f4a702461c442af970b06a5f72a904acb
+>

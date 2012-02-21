@@ -17,21 +17,27 @@ Sub Main()
 
 End Sub
 
+
 Sub initTheme()
 
     app = CreateObject("roAppManager")
     theme = CreateObject("roAssociativeArray")
 
-    theme.OverhangOffsetSD_X = "26"
-    theme.OverhangOffsetSD_Y = "14"
-    theme.OverhangSliceSD = "pkg:/images/Overhang_BackgroundSlice_tsn_SD43.png"
-    theme.OverhangLogoSD  = "pkg:/images/logo_overhang_SD.png"
+    theme.OverhangOffsetSD_X = "30"
+    theme.OverhangOffsetSD_Y = "22"
+    theme.OverhangSliceSD = "pkg:/images/overhang_background_slice_SD.png"
+    theme.OverhangLogoSD  = "pkg:/images/Logo_Overhang_SD.png"
 
-    theme.OverhangOffsetHD_X = "10"
-    theme.OverhangOffsetHD_Y = "52"
-    theme.OverhangSliceHD = "pkg:/images/Overhang_BackgroundSlice_tsn_HD.png"
-    theme.OverhangLogoHD  = "pkg:/images/logo_overhang_HD.png"
 
+    theme.OverhangOffsetHD_X = "15"
+    theme.OverhangOffsetHD_Y = "60"
+    theme.OverhangSliceHD = "pkg:/images/Overhang_BackgroundSlice_HD.png"
+    theme.OverhangLogoHD  = "pkg:/images/Logo_Overhang_HD.png"
+
+    theme.BackgroundColor = "#FFFFFF"
+    theme.FilterBannerSliceHD = "pkg:/images/banner_filter_HD.png"
+    theme.FilterBannerSliceSD = "pkg:/images/banner_filter_SD.png"
+    
     app.SetTheme(theme)
 End Sub
 
@@ -47,6 +53,7 @@ Function preShowPosterScreen(breadA=invalid, breadB=invalid) As Object
     if breadA<>invalid and breadB<>invalid then
         screen.SetBreadcrumbText(breadA, breadB)
     end if
+
 
     screen.SetListStyle("arced-landscape")
     return screen
@@ -70,7 +77,7 @@ Function showPosterScreen(screen As Object) As Integer
     while true
         msg = wait(0, screen.GetMessagePort())
         if type(msg) = "roPosterScreenEvent" then
-            print "showPosterScreen | msg = "; msg.GetMessage() " | index = "; msg.GetIndex()
+            print "showPosterScreen | msg = "; msg.GetMessage() " | index = "; msg.GetIndex() " | type = "; msg.GetType()
             if msg.isListFocused() then
                 'get the list of shows for the currently selected item
                 screen.SetContentList(getShowsForCategoryItem(categoryList[msg.GetIndex()]))
@@ -101,8 +108,8 @@ Function GetVideoArgs(categoryIndex As Integer, videoIndex As Integer) As Object
 
     videoXmls = m.videosXml
 
-    date = videoXmls.dates.date[categoryIndex]
-    video = date.videos.video[videoIndex]
+    category = videoXmls.categories.category[categoryIndex]
+    video = category.videos.video[videoIndex]
     
     videoArgs = CreateObject("roAssociativeArray")
     videoArgs.url = video.url.GetText()
@@ -181,38 +188,42 @@ Function DisplayInfomenu(infotype)
 end function
 
 Function getCategoryList() As Object
+    print "In getCategoryList()"
 
     videoXmls = m.videosXml    
 
-    dates = videoXmls.dates.date
+    categories = videoXmls.categories.category
     
     categoryList = CreateObject("roArray", 10, true)
 
-    for each date in dates
-       categoryList.Push(date.displayDate.GetText())
+    for each category in categories
+       print "adding category: "; category.name.GetText()
+       categoryList.Push(category.name.GetText())
     end for
 
     return categoryList
 End Function
 
 
-Function getShowsForCategoryItem(category As Object) As Object
+Function getShowsForCategoryItem(selectedCategory As Object) As Object
+
+    print "getting shows for category "; selectedCategory
 
     videoXmls = m.videosXml    
 
-    dates = videoXmls.dates.date
+    categories = videoXmls.categories.category
     
     showList = CreateObject("roArray", 10, true)
 
-    for each date in dates
+    print "before for each"
+
+    for each category in categories
     
-       dateString = date.displayDate.GetText()
-       
-       if dateString = category
-          print "found category"
+       if category.name.GetText() = selectedCategory
+          print "found category"; category.name.GetText()
           
-          videos = date.videos.video
-          print "date.videos type: ";type(date.videos)
+          videos = category.videos.video
+          print "category.videos type: ";type(category.videos)
           
 	  print "Count videos: ";videos.Count()          
 	  print "Video count: "; videos.video.Count()	
@@ -230,8 +241,6 @@ Function getShowsForCategoryItem(category As Object) As Object
           end for
        end if
     end for
-
-    print "getting shows for category "; category
 
     return showList
 
@@ -303,7 +312,7 @@ End Function
 
 Function GetVideosXml() As Object
     urlTransfer = CreateObject("roUrlTransfer")
-    urlTransfer.SetUrl("http://michel.f1kart.com/video_station/tsn")    
+    urlTransfer.SetUrl("http://michel.f1kart.com/channels/1.xml")    
     raw_xml = urlTransfer.GetToString()
 
     videoXmls=CreateObject("roXMLElement")
