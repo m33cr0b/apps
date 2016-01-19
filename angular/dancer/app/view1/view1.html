@@ -1,1 +1,31 @@
-<p>This is the partial for view 1.</p>
+<p>Find a Bachata, Salsa, or Kizomba dance event</p>
+
+Search: <input ng-model="query"/>
+
+<ul>
+	<li ng-repeat="event in events | filter: query">
+		<span>{{event.name}}</span>
+		<p>
+			<span ng-repeat="dance in event.dances">{{dance}}&nbsp</span>
+		</p>
+	</li>
+</ul>
+
+<div>
+	<span>Add an event</span>
+	<p>
+	<table>
+		<tr>
+			<td>Name:</td><td><input ng-model="name"/></td>
+		</tr>
+		<tr>
+			<td>Dances:</td><td><input ng-model="dances"/></td>
+		</tr>
+		<tr>
+			<td></td><td><button ng-click="addEvent()">Add</button></td>
+		</tr>
+	</table>
+	</p>
+</div>
+
+

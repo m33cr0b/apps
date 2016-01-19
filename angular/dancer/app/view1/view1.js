@@ -9,6 +9,15 @@ angular.module('myApp.view1', ['ngRoute'])
   });
 }])
 
-.controller('View1Ctrl', [function() {
+.controller('View1Ctrl', ['$scope', function($scope) {
+	$scope.query="";
+	$scope.name="";
+	$scope.dances="";
 
+	$scope.events = [{'name' : "Hot bachata nights", 'dances' : ['Salsa', 'bachata']}, {"name": "Salsa Mondays"}];
+
+	$scope.addEvent = function () {
+		
+		$scope.events.push({'name' : $scope.name, 'dances' : $scope.dances.split(' ')});
+	};
 }]);
